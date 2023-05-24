@@ -1,0 +1,6 @@
+name: froid_od
+dependencies:
+- python>=3.8
+- numpy
+- scikit-learn
+- scipy
