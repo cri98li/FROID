@@ -3,3 +3,6 @@ pandas
 scikit-learn
 pyod
 pynomaly
+tqdm
+combo
+suod
