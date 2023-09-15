@@ -1,11 +1,4 @@
-import copy
-
-import numpy as np
-from tqdm.auto import tqdm
-
-from pyod.models.cblof import CBLOF
 from pyod.models.cof import COF
-from pyod.models.pca import PCA as pyod_PCA
 from pyod.models.copod import COPOD
 from pyod.models.feature_bagging import FeatureBagging
 from pyod.models.hbos import HBOS
@@ -13,17 +6,13 @@ from pyod.models.iforest import IForest
 from pyod.models.knn import KNN
 from pyod.models.loda import LODA
 from pyod.models.mcd import MCD
-from pyod.models.ocsvm import OCSVM
-from pyod.models.suod import SUOD
-from sklearn.base import BaseEstimator, TransformerMixin
+from pyod.models.pca import PCA as pyod_PCA
 from sklearn.covariance import EllipticEnvelope
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.manifold import Isomap, MDS, TSNE, LocallyLinearEmbedding, SpectralEmbedding
+from sklearn.manifold import Isomap, TSNE
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.random_projection import GaussianRandomProjection
 
 from froid_od.classes.froid import FROID
-from froid_od.classes.wrappers.loop import FROID_LocalOutlierProbability
 
 
 class LFROID(FROID):
@@ -40,7 +29,7 @@ class LFROID(FROID):
         "copod": COPOD,
         "isofor": IForest,
         "loda": LODA,
-        "suod": SUOD,
+        #"suod": SUOD, # problemi di versioni
         "pca": pyod_PCA,
     }
 
@@ -48,8 +37,8 @@ class LFROID(FROID):
         "pca": PCA,
         "isomap": Isomap,
         "kpca": KernelPCA,
-        #"tsne": TSNE,
-        #"rsp": GaussianRandomProjection,
+        #"tsne": TSNE, #aggiungere il metodo transforms
+        #"rsp": GaussianRandomProjection, # vedere gli iperparametri
     }
-    def __init__(self, out_det="all", feat_red="all", froid_iter=1, seed=42, n_jobs=1, **kwargs):
+    def __init__(self, froid_iter=1, seed=42, n_jobs=1, **kwargs):
         super().__init__(LFROID.out_det_dict, LFROID.feat_red_dict, froid_iter, seed, n_jobs, **kwargs)

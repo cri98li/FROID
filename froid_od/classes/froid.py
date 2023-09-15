@@ -40,7 +40,7 @@ class FROID(BaseEstimator, TransformerMixin):
         "copod": COPOD,
         "isofor": IForest,
         "loda": LODA,
-        "suod": SUOD,
+        #"suod": SUOD, # problemi di versioni
         "ocsvm": OCSVM,
         "pca": pyod_PCA,
     }
@@ -48,12 +48,12 @@ class FROID(BaseEstimator, TransformerMixin):
     feat_red_dict = {
         "pca": PCA,
         "isomap": Isomap,
-        #"mds": MDS,
+        #"mds": MDS, #aggiungere il metodo transforms
         "kpca": KernelPCA,
-        #"tsne": TSNE,
-        #"rsp": GaussianRandomProjection,
+        #"tsne": TSNE, #aggiungere il metodo transforms
+        #"rsp": GaussianRandomProjection, # vedere gli iperparametri
         "lle": LocallyLinearEmbedding,
-        #"se": SpectralEmbedding,
+        #"se": SpectralEmbedding, #aggiungere il metodo transforms
     }
     def __init__(self, out_det="all", feat_red="all", froid_iter=1, seed=42, n_jobs=1, **kwargs):
         self.n_jobs = n_jobs
