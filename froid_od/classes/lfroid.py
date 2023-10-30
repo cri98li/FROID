@@ -40,5 +40,5 @@ class LFROID(FROID):
         #"tsne": TSNE, #aggiungere il metodo transforms
         #"rsp": GaussianRandomProjection, # vedere gli iperparametri
     }
-    def __init__(self, froid_iter=1, seed=42, n_jobs=1, **kwargs):
-        super().__init__(LFROID.out_det_dict, LFROID.feat_red_dict, froid_iter, seed, n_jobs, **kwargs)
+    def __init__(self, froid_iter=1, seed=42, n_jobs=1, verbose=False, **kwargs):
+        super().__init__(LFROID.out_det_dict, LFROID.feat_red_dict, froid_iter, seed, n_jobs, verbose, **kwargs)

@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+import sklearn.base
 from tqdm.auto import tqdm
 
 from pyod.models.cblof import CBLOF
@@ -55,11 +56,12 @@ class FROID(BaseEstimator, TransformerMixin):
         "lle": LocallyLinearEmbedding,
         #"se": SpectralEmbedding, #aggiungere il metodo transforms
     }
-    def __init__(self, out_det="all", feat_red="all", froid_iter=1, seed=42, n_jobs=1, **kwargs):
+    def __init__(self, out_det="all", feat_red="all", froid_iter=1, seed=42, n_jobs=1, verbose=False, **kwargs):
         self.n_jobs = n_jobs
         self.seed = seed
+        self.verbose = verbose
         self.kwargs = kwargs
-        self.iter = froid_iter
+        self.froid_iter = froid_iter
 
         self.fitted_ods = []
         self.fitted_frs = []
@@ -67,6 +69,7 @@ class FROID(BaseEstimator, TransformerMixin):
         self.kwargs["n_jobs"] = n_jobs
         self.kwargs["seed"] = seed
         self.kwargs["random_state"] = seed
+        self.kwargs["verbose"] = verbose
 
         if "novelty" not in self.kwargs:
             self.kwargs["novelty"] = True
@@ -90,25 +93,19 @@ class FROID(BaseEstimator, TransformerMixin):
             raise Exception(f"Unsupported type {type(out_det)} for out_det")
 
     def fit(self, X: np.ndarray):
-        Xs_od = []
-        Xs_fr = []
-
         input_od = input_fr = X
 
-        for i in tqdm(range(self.iter), position=0, leave=False, desc="fit"):
-            X_od, fitted_od = _run_od(input_od, self.out_det, self.kwargs)
-            X_fr, fitted_fr = _run_fr(input_fr, self.feat_red, self.kwargs)
+        for i in tqdm(range(self.froid_iter), position=0, leave=False, desc="fit", disable=not self.verbose):
+            X_od, fitted_od = _run_od(input_od, self.out_det, self.kwargs, None, self.verbose)
+            X_fr, fitted_fr = _run_fr(input_fr, self.feat_red, self.kwargs, None, self.verbose)
 
             self.fitted_ods.append(fitted_od)
             self.fitted_frs.append(fitted_fr)
 
-            Xs_od.append(X_od)
-            Xs_fr.append(X_fr)
-
             input_od = X_fr
             input_fr = X_od
 
-        return np.hstack(Xs_od+Xs_fr)
+        return self
 
     def transform(self, X: np.ndarray):
         Xs_od = []
@@ -116,11 +113,11 @@ class FROID(BaseEstimator, TransformerMixin):
 
         input_od = input_fr = X
 
-        for i, fitted_od, fitted_fr in zip(tqdm(range(self.iter), position=0, leave=False, desc="transform"), self.fitted_ods,
-                                           self.fitted_frs
-                                           ):
-            X_od, _ = _run_od(input_od, self.out_det, self.kwargs, fitted_od)
-            X_fr, _ = _run_fr(input_fr, self.feat_red, self.kwargs, fitted_fr)
+        for i, fitted_od, fitted_fr in zip(
+                tqdm(range(self.froid_iter), position=0, leave=False, desc="transform", disable=not self.verbose),
+                self.fitted_ods, self.fitted_frs):
+            X_od, _ = _run_od(input_od, self.out_det, self.kwargs, fitted_od, self.verbose)
+            X_fr, _ = _run_fr(input_fr, self.feat_red, self.kwargs, fitted_fr, self.verbose)
 
             Xs_od.append(X_od)
             Xs_fr.append(X_fr)
@@ -132,13 +129,13 @@ class FROID(BaseEstimator, TransformerMixin):
 
 
 
-def _run_od(X, methods: dict(), kwargs: dict, fitted=None):
+def _run_od(X, methods: dict(), kwargs: dict, fitted=None, verbose=False):
 
     X_out = np.zeros((len(X), len(methods))) * np.inf
 
     if fitted is None:
         fitted = []
-        it = tqdm(methods.items(), position=1, leave=False)
+        it = tqdm(methods.items(), position=1, leave=False, disable=not verbose)
         for i, (name, constructor) in enumerate(it):
             it.set_description(f"Fitting {name}")
 
@@ -156,7 +153,7 @@ def _run_od(X, methods: dict(), kwargs: dict, fitted=None):
                 X_out[:, i] = method.decision_function(X)
 
     else:
-        it = tqdm(zip(range(len(fitted)), methods.items(), fitted), total=len(fitted), position=1, leave=False)
+        it = tqdm(zip(range(len(fitted)), methods.items(), fitted), total=len(fitted), position=1, leave=False, disable=not verbose)
         for i, (name, constructor), method in it:
             it.set_description(f"Running {name}")
             # method.predict(X)
@@ -166,12 +163,12 @@ def _run_od(X, methods: dict(), kwargs: dict, fitted=None):
     return X_out, fitted
 
 
-def _run_fr(X, methods: dict(), kwargs: dict, fitted=None):
+def _run_fr(X, methods: dict(), kwargs: dict, fitted=None, verbose=False):
     X_out = []
 
     if fitted is None:
         fitted = []
-        it = tqdm(methods.items(), position=1, leave=False)
+        it = tqdm(methods.items(), position=1, leave=False, disable=not verbose)
         for name, constructor in it:
             it.set_description(f"Fitting {name}")
 
@@ -180,7 +177,7 @@ def _run_fr(X, methods: dict(), kwargs: dict, fitted=None):
             fitted.append(method)
 
     else:
-        it = tqdm(zip(methods.items(), fitted), total=len(fitted), position=1, leave=False)
+        it = tqdm(zip(methods.items(), fitted), total=len(fitted), position=1, leave=False, disable=not verbose)
         for (name, constructor), method in it:
             it.set_description(f"Running {name}")
             X_out.append(method.transform(X))

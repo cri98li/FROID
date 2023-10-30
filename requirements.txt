@@ -6,3 +6,4 @@ pynomaly
 tqdm
 combo
 suod
+scipy
