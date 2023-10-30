@@ -76,7 +76,7 @@ class FROID(BaseEstimator, TransformerMixin):
         elif type(out_det) == dict:
             self.out_det = out_det
         elif type(out_det) == list:
-            self.out_det = dict([(k, v) for k, v in out_det.items() if k in FROID.out_det_dict])
+            self.out_det = dict([(k, v) for k, v in FROID.out_det_dict.items() if k in out_det])
         else:
             raise Exception(f"Unsupported type {type(out_det)} for out_det")
 
@@ -85,7 +85,7 @@ class FROID(BaseEstimator, TransformerMixin):
         elif type(feat_red) == dict:
             self.feat_red = feat_red
         elif type(feat_red) == list:
-            self.feat_red = dict([(k, v) for k, v in feat_red.items() if k in FROID.feat_red_dict])
+            self.feat_red = dict([(k, v) for k, v in FROID.feat_red_dict.items() if k in feat_red])
         else:
             raise Exception(f"Unsupported type {type(out_det)} for out_det")
 
@@ -96,8 +96,8 @@ class FROID(BaseEstimator, TransformerMixin):
         input_od = input_fr = X
 
         for i in tqdm(range(self.iter), position=0, leave=False, desc="fit"):
-            X_od, fitted_od = _run_od(input_od, self.out_det_dict, self.kwargs)
-            X_fr, fitted_fr = _run_fr(input_fr, self.feat_red_dict, self.kwargs)
+            X_od, fitted_od = _run_od(input_od, self.out_det, self.kwargs)
+            X_fr, fitted_fr = _run_fr(input_fr, self.feat_red, self.kwargs)
 
             self.fitted_ods.append(fitted_od)
             self.fitted_frs.append(fitted_fr)
@@ -116,12 +116,11 @@ class FROID(BaseEstimator, TransformerMixin):
 
         input_od = input_fr = X
 
-        for i, fitted_od, fitted_fr in zip(range(self.iter),
-                                           self.fitted_ods,
-                                           tqdm(self.fitted_frs, position=0, leave=False, desc="transform")
+        for i, fitted_od, fitted_fr in zip(tqdm(range(self.iter), position=0, leave=False, desc="transform"), self.fitted_ods,
+                                           self.fitted_frs
                                            ):
-            X_od, _ = _run_od(input_od, self.out_det_dict, self.kwargs, fitted_od)
-            X_fr, _ = _run_fr(input_fr, self.feat_red_dict, self.kwargs, fitted_fr)
+            X_od, _ = _run_od(input_od, self.out_det, self.kwargs, fitted_od)
+            X_fr, _ = _run_fr(input_fr, self.feat_red, self.kwargs, fitted_fr)
 
             Xs_od.append(X_od)
             Xs_fr.append(X_fr)
@@ -133,7 +132,7 @@ class FROID(BaseEstimator, TransformerMixin):
 
 
 
-def _run_od(X, methods: FROID.out_det_dict, kwargs: dict, fitted=None):
+def _run_od(X, methods: dict(), kwargs: dict, fitted=None):
 
     X_out = np.zeros((len(X), len(methods))) * np.inf
 
@@ -167,7 +166,7 @@ def _run_od(X, methods: FROID.out_det_dict, kwargs: dict, fitted=None):
     return X_out, fitted
 
 
-def _run_fr(X, methods: FROID.feat_red_dict, kwargs: dict, fitted=None):
+def _run_fr(X, methods: dict(), kwargs: dict, fitted=None):
     X_out = []
 
     if fitted is None:

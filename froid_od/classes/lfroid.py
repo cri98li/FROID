@@ -22,7 +22,7 @@ class LFROID(FROID):
         "lof": LocalOutlierFactor,
         "cof": COF,
         #"cblof": CBLOF,  # Il clustering non converge
-        "ellenv": EllipticEnvelope,
+        #"ellenv": EllipticEnvelope, # Questa la escludo io
         "hbos": HBOS,
         "mcd": MCD,
         "featurebagging": FeatureBagging,
