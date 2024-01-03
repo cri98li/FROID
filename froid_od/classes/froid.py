@@ -1,7 +1,10 @@
+import inspect
 import copy
-
 import numpy as np
 import sklearn.base
+import random
+
+from sklearn.ensemble import RandomTreesEmbedding
 from tqdm.auto import tqdm
 
 from pyod.models.cblof import CBLOF
@@ -55,8 +58,9 @@ class FROID(BaseEstimator, TransformerMixin):
         #"rsp": GaussianRandomProjection, # vedere gli iperparametri
         "lle": LocallyLinearEmbedding,
         #"se": SpectralEmbedding, #aggiungere il metodo transforms
+        #"rte": RandomTreesEmbedding(sparse_output=False)
     }
-    def __init__(self, out_det="all", feat_red="all", froid_iter=1, seed=42, n_jobs=1, verbose=False, **kwargs):
+    def __init__(self, out_det="all", feat_red:str|dict|list[str]="all", froid_iter=1, seed=42, n_jobs=1, verbose=False, **kwargs):
         self.n_jobs = n_jobs
         self.seed = seed
         self.verbose = verbose
@@ -139,7 +143,11 @@ def _run_od(X, methods: dict(), kwargs: dict, fitted=None, verbose=False):
         for i, (name, constructor) in enumerate(it):
             it.set_description(f"Fitting {name}")
 
-            method = constructor(**{key: kwargs[key] for key in kwargs if key in constructor.__init__.__code__.co_varnames})
+            if inspect.isclass(constructor):
+                method = constructor(**{key: kwargs[key] for key in kwargs if key in constructor.__init__.__code__.co_varnames})
+            else:
+                method = copy.deepcopy(constructor)
+
             method.fit(X)
             fitted.append(method)
 
@@ -172,7 +180,11 @@ def _run_fr(X, methods: dict(), kwargs: dict, fitted=None, verbose=False):
         for name, constructor in it:
             it.set_description(f"Fitting {name}")
 
-            method = constructor(**{key: kwargs[key] for key in kwargs if key in constructor.__init__.__code__.co_varnames})
+            if inspect.isclass(constructor):
+                method = constructor(**{key: kwargs[key] for key in kwargs if key in constructor.__init__.__code__.co_varnames})
+            else:
+                method = copy.deepcopy(constructor)
+
             X_out.append(method.fit_transform(X))
             fitted.append(method)
 
